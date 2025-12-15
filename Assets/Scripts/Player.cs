@@ -1,9 +1,7 @@
-﻿using System.Collections;
+﻿using DG.Tweening;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Serialization;
-using UnityEngine.UIElements;
-using static UnityEngine.GraphicsBuffer;
 
 public class Player : MonoSingleton<Player>
 {
@@ -16,6 +14,8 @@ public class Player : MonoSingleton<Player>
     public float m_airFallFriction = 0.975f;
     public float m_airMoveFriction = 0.85f;
 
+    [SerializeField] Transform visual;
+    [SerializeField] float camShakeMin = 0.1f;
     private Rigidbody2D m_rigidBody = null;
     private bool m_jumpPressed = false;
     private bool m_jumpHeld = false;
@@ -38,7 +38,6 @@ public class Player : MonoSingleton<Player>
 
     private State m_state = State.Idle;
 
-    // Use this for initialization
     void Start ()
     {
         m_rigidBody = transform.GetComponent<Rigidbody2D>();
@@ -94,6 +93,15 @@ public class Player : MonoSingleton<Player>
         m_hasWeapon = true;
     }
 
+    void Jump()
+    {
+        m_stateTimer = 0;
+        m_state = State.Jumping;
+
+        print("jump!!!");
+        ShakeSprite();
+    }
+
     void Idle()
     {
         m_vel = Vector2.zero;
@@ -108,8 +116,7 @@ public class Player : MonoSingleton<Player>
         //Check input for other state transitions
         if (m_jumpPressed || m_jumpHeld)
         {
-            m_stateTimer = 0;
-            m_state = State.Jumping;
+            Jump();
             return;
         }
 
@@ -169,6 +176,29 @@ public class Player : MonoSingleton<Player>
         ApplyVelocity();
     }
 
+    void ShakeSprite()
+    {
+        visual.DOComplete();
+        visual.DOShakeScale(0.3f, 1);
+    }
+
+    void Landing()
+    {
+        //print("landing!!");
+        if (Mathf.Abs(m_vel.y) > camShakeMin)
+            CameraShaker.Instance.Shake();
+
+        //If we've been pushed up, we've hit the ground.  Go to a ground-based state.
+        if (m_wantsRight || m_wantsLeft)
+        {
+            m_state = State.Walking;
+        }
+        else
+        {
+            m_state = State.Idle;
+        }
+    }
+
     void Walking()
     {
         if (m_wantsLeft)
@@ -199,8 +229,7 @@ public class Player : MonoSingleton<Player>
 
         if (m_jumpPressed || m_jumpHeld)
         {
-            m_stateTimer = 0;
-            m_state = State.Jumping;
+            Jump();
             return;
         }
     }
@@ -260,15 +289,7 @@ public class Player : MonoSingleton<Player>
                     }
                     if (m_state == State.Falling)
                     {
-                        //If we've been pushed up, we've hit the ground.  Go to a ground-based state.
-                        if (m_wantsRight || m_wantsLeft)
-                        {
-                            m_state = State.Walking;
-                        }
-                        else
-                        {
-                            m_state = State.Idle;
-                        }
+                        Landing();
                     }
                 }
                 //Hit Roof

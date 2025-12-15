@@ -49,16 +49,4 @@ public abstract class MonoSingleton<T> : MonoBehaviour where T : MonoSingleton<T
     {
         instance = null;
     }
-
-    // Use this for initialization
-    void Start()
-    {
-
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-
-    }
 }
