@@ -863,7 +863,7 @@ MonoBehaviour:
   m_jumpMinTime: 0.06
   m_jumpMaxTime: 0.2
   m_airFallFriction: 0.975
-  m_airMoveFriction: 0.85
+  m_airMoveFriction: 0.75
 --- !u!61 &679829337
 BoxCollider2D:
   m_ObjectHideFlags: 0
