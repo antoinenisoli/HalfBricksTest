@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using DG.Tweening;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,22 +7,27 @@ public class Spikes : MonoBehaviour {
 
     private SpriteRenderer m_sprite = null;
     private Color m_defaultColor = new Color();
-    // Use this for initialization
+
     void Start()
     {
-        m_sprite = transform.GetComponent<SpriteRenderer>();
+        m_sprite = transform.GetComponentInChildren<SpriteRenderer>();
         m_defaultColor = m_sprite.color;
+
+        var tween = transform.DOScaleY(1.5f, 0.5f);
+        tween.SetLoops(-1, LoopType.Yoyo);
     }
 
-    // Update is called once per frame
-    void Update()
+    void Hit()
     {
-
+        CameraShaker.Instance.Shake();
+        m_sprite.color = new Color(m_defaultColor.r / 2, m_defaultColor.g / 2, m_defaultColor.b / 2, 1);
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        m_sprite.color = new Color(m_defaultColor.r / 2, m_defaultColor.g / 2, m_defaultColor.b / 2, 1);
+        Hit();
+        VFXManager.Instance.PlayVFX("ImpactFX", collision.ClosestPoint(transform.position));
+        Player.Instance.Push();
     }
 
     private void OnTriggerExit2D(Collider2D collision)

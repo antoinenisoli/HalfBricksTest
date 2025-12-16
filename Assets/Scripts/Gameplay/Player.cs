@@ -2,9 +2,11 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static UnityEngine.GraphicsBuffer;
 
 public class Player : MonoSingleton<Player>
 {
+    [Header("Controls")]
     public float m_moveAccel = (0.12f * 60.0f);
     public float m_groundFriction = 0.85f;
     public float m_gravity = (-0.05f * 60.0f);
@@ -14,9 +16,12 @@ public class Player : MonoSingleton<Player>
     public float m_airFallFriction = 0.975f;
     public float m_airMoveFriction = 0.85f;
 
-    [SerializeField] Transform visual;
-    [SerializeField] GameObject landingFX;
+    [Header("References")]
+    [SerializeField] State m_state = State.Idle;
     [SerializeField] float camShakeMin = 0.1f;
+    [SerializeField] float damagedDelay = 0.3f;
+    [SerializeField] Vector2 pushForce = new Vector2(15f,15f);
+
     private Rigidbody2D m_rigidBody = null;
     private bool m_jumpPressed = false;
     private bool m_jumpHeld = false;
@@ -28,19 +33,20 @@ public class Player : MonoSingleton<Player>
     private float m_stateTimer = 0.0f;
     private Vector2 m_vel = new Vector2(0, 0);
     private List<GameObject> m_groundObjects = new List<GameObject>();
+    SpriteRenderer visual;
 
     private enum State
     {
         Idle = 0,
         Falling,
         Jumping,
-        Walking
+        Walking,
+        Damaged,
     };
-
-    private State m_state = State.Idle;
 
     void Start ()
     {
+        visual = GetComponentInChildren<SpriteRenderer>();
         m_rigidBody = transform.GetComponent<Rigidbody2D>();
     }
 
@@ -74,6 +80,9 @@ public class Player : MonoSingleton<Player>
                 break;
             case State.Walking:
                 Walking();
+                break;
+            case State.Damaged:
+                Damaged();
                 break;
             default:
                 break;
@@ -178,17 +187,17 @@ public class Player : MonoSingleton<Player>
 
     void ShakeSprite()
     {
-        visual.DOComplete();
-        visual.DOShakeScale(0.3f, 1);
+        visual.transform.DOComplete();
+        visual.transform.DOShakeScale(0.3f, 1);
     }
 
     void Landing()
     {
-        //print("landing!!");
+        print("landing: " + m_vel.y);
         if (Mathf.Abs(m_vel.y) > camShakeMin)
         {
             CameraShaker.Instance.Shake();
-            Instantiate(landingFX, transform.position + Vector3.down * 2.5f, Quaternion.identity);
+            VFXManager.Instance.PlayVFX("LandingFX", transform.position + Vector3.down * 2.5f);
         }
 
         //If we've been pushed up, we've hit the ground.  Go to a ground-based state.
@@ -199,6 +208,41 @@ public class Player : MonoSingleton<Player>
         else
         {
             m_state = State.Idle;
+        }
+    }
+
+    void ResetPlayer()
+    {
+        visual.transform.DORotate(Vector3.zero, 0f);
+        visual.color = Color.white;
+        m_stateTimer = 0;
+        m_vel = Vector2.zero;
+        m_rigidBody.velocity = Vector2.zero;
+
+        m_rigidBody.gravityScale = 0;
+        m_state = State.Idle;
+    }
+
+    public void Push()
+    {
+        m_stateTimer = 0;
+        m_state = State.Damaged;
+        visual.color = Color.red;
+
+        m_vel = Vector2.zero;
+        m_rigidBody.gravityScale = 2;
+        m_rigidBody.AddForce(pushForce, ForceMode2D.Impulse);
+    }
+
+    void Damaged()
+    {
+        m_stateTimer += Time.fixedDeltaTime;
+        visual.transform.RotateAround(visual.transform.position, Vector3.forward, 1000 * Time.deltaTime);
+
+        if (m_stateTimer > damagedDelay)
+        {
+            ResetPlayer();
+            return;
         }
     }
 
