@@ -34,6 +34,7 @@ public class Player : MonoSingleton<Player>
     private Vector2 m_vel = new Vector2(0, 0);
     private List<GameObject> m_groundObjects = new List<GameObject>();
     SpriteRenderer visual;
+    float currentJumpVel;
 
     private enum State
     {
@@ -105,6 +106,12 @@ public class Player : MonoSingleton<Player>
 
     void Jump()
     {
+        Jump(m_jumpVel);
+    }
+
+    public void Jump(float force)
+    {
+        currentJumpVel = force;
         m_stateTimer = 0;
         m_state = State.Jumping;
         //print("jump!!!");
@@ -158,10 +165,9 @@ public class Player : MonoSingleton<Player>
     void Jumping()
     {
         m_stateTimer += Time.fixedDeltaTime;
-
         if (m_stateTimer < m_jumpMinTime || (m_jumpHeld && m_stateTimer < m_jumpMaxTime))
         {
-            m_vel.y = m_jumpVel;
+            m_vel.y = currentJumpVel;
         }
 
         m_vel.y += m_gravity * Time.fixedDeltaTime;
@@ -194,6 +200,7 @@ public class Player : MonoSingleton<Player>
     void Landing()
     {
         print("landing: " + m_vel.y);
+        currentJumpVel = m_jumpVel;
         if (Mathf.Abs(m_vel.y) > camShakeMin)
         {
             CameraShaker.Instance.Shake();
