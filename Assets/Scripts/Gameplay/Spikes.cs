@@ -20,18 +20,20 @@ public class Spikes : MonoBehaviour {
     void Hit()
     {
         CameraShaker.Instance.Shake();
-        m_sprite.color = new Color(m_defaultColor.r / 2, m_defaultColor.g / 2, m_defaultColor.b / 2, 1);
+        Player.Instance.Push();
+        StartCoroutine(SetColor());
     }
 
     private void OnTriggerEnter2D(Collider2D collision)
     {
         Hit();
         VFXManager.Instance.PlayVFX("ImpactFX", collision.ClosestPoint(transform.position));
-        Player.Instance.Push();
     }
 
-    private void OnTriggerExit2D(Collider2D collision)
+    private IEnumerator SetColor()
     {
+        m_sprite.color = new Color(m_defaultColor.r / 2, m_defaultColor.g / 2, m_defaultColor.b / 2, 1);
+        yield return new WaitForSeconds(0.2f);
         m_sprite.color = m_defaultColor;
     }
 }
