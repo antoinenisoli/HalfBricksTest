@@ -15,6 +15,7 @@ public class Player : MonoSingleton<Player>
     public float m_airMoveFriction = 0.85f;
 
     [SerializeField] Transform visual;
+    [SerializeField] GameObject landingFX;
     [SerializeField] float camShakeMin = 0.1f;
     private Rigidbody2D m_rigidBody = null;
     private bool m_jumpPressed = false;
@@ -97,8 +98,7 @@ public class Player : MonoSingleton<Player>
     {
         m_stateTimer = 0;
         m_state = State.Jumping;
-
-        print("jump!!!");
+        //print("jump!!!");
         ShakeSprite();
     }
 
@@ -186,7 +186,10 @@ public class Player : MonoSingleton<Player>
     {
         //print("landing!!");
         if (Mathf.Abs(m_vel.y) > camShakeMin)
+        {
             CameraShaker.Instance.Shake();
+            Instantiate(landingFX, transform.position + Vector3.down * 2.5f, Quaternion.identity);
+        }
 
         //If we've been pushed up, we've hit the ground.  Go to a ground-based state.
         if (m_wantsRight || m_wantsLeft)
